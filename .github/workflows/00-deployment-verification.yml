@@ -1,0 +1,68 @@
+name: Deployment Verification
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  deploy-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Create necessary Docker networks
+      run: |
+        docker network create zammad-network || true
+        docker network create traefik-network || true
+
+    - name: Start up services using Docker Compose
+      run: docker compose -f zammad-traefik-letsencrypt-docker-compose.yml up -d
+
+    - name: Modify /etc/hosts for internal routing
+      run: |
+        echo "127.0.0.1 zammad.heyvaldemar.net" | sudo tee -a /etc/hosts
+        echo "127.0.0.1 traefik.zammad.heyvaldemar.net" | sudo tee -a /etc/hosts
+
+    - name: Print Docker Compose services status
+      run: docker ps
+
+    - name: Print Traefik and Zammad logs
+      run: |
+        echo "Traefik Logs:"
+        TRAEFIK_CONTAINER_ID=$(docker ps --no-trunc -qf "name=traefik" | head -n 1)
+        if [ ! -z "$TRAEFIK_CONTAINER_ID" ]; then
+          docker logs $TRAEFIK_CONTAINER_ID
+        else
+          echo "Traefik log unavailable"
+        fi
+        
+        echo "Zammad Logs:"
+        ZAMMAD_CONTAINER_ID=$(docker ps --no-trunc -qf "name=zammad" | head -n 1)
+        if [ ! -z "$ZAMMAD_CONTAINER_ID" ]; then
+          docker logs $ZAMMAD_CONTAINER_ID
+        else
+          echo "Zammad log unavailable"
+        fi
+
+    - name: Wait for Zammad to be ready via Traefik
+      run: |
+        echo "Checking the routing and availability of Zammad via Traefik..."
+        timeout 5m bash -c 'while ! curl -fsSLk "https://zammad.heyvaldemar.net"; do echo "Waiting for Zammad to be ready..."; sleep 10; done'
+
+    - name: Inspect Network Configuration
+      run: |
+        docker network inspect zammad-network
+        docker network inspect traefik-network
+
+    - name: Shutdown Docker Compose services
+      if: always()
+      run: docker compose -f zammad-traefik-letsencrypt-docker-compose.yml down
