@@ -35,28 +35,10 @@ jobs:
     - name: Print Docker Compose services status
       run: docker ps
 
-    - name: Print Traefik and Zammad logs
+    - name: Wait for the application to be ready via Traefik
       run: |
-        echo "Traefik Logs:"
-        TRAEFIK_CONTAINER_ID=$(docker ps --no-trunc -qf "name=traefik" | head -n 1)
-        if [ ! -z "$TRAEFIK_CONTAINER_ID" ]; then
-          docker logs $TRAEFIK_CONTAINER_ID
-        else
-          echo "Traefik log unavailable"
-        fi
-        
-        echo "Zammad Logs:"
-        ZAMMAD_CONTAINER_ID=$(docker ps --no-trunc -qf "name=zammad" | head -n 1)
-        if [ ! -z "$ZAMMAD_CONTAINER_ID" ]; then
-          docker logs $ZAMMAD_CONTAINER_ID
-        else
-          echo "Zammad log unavailable"
-        fi
-
-    - name: Wait for Zammad to be ready via Traefik
-      run: |
-        echo "Checking the routing and availability of Zammad via Traefik..."
-        timeout 5m bash -c 'while ! curl -fsSLk "https://zammad.heyvaldemar.net"; do echo "Waiting for Zammad to be ready..."; sleep 10; done'
+        echo "Checking the routing and availability of application via Traefik..."
+        timeout 5m bash -c 'while ! curl -fsSLk "https://zammad.heyvaldemar.net"; do echo "Waiting for the application to be ready..."; sleep 10; done'
 
     - name: Inspect Network Configuration
       run: |
