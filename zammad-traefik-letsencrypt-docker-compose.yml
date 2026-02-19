@@ -48,8 +48,11 @@ services:
 
   elasticsearch:
     image: ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG}
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
     volumes:
-      - elasticsearch-data:/bitnami/elasticsearch/data
+      - elasticsearch-data:/usr/share/elasticsearch/data
     networks:
       - zammad-network
     restart: unless-stopped
