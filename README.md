@@ -1,111 +1,87 @@
-# Zammad with Let's Encrypt Using Docker Compose
+# Zammad + Traefik + Let's Encrypt — Docker Compose
 
-[![Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/00-deployment-verification.yml/badge.svg)](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions)
+[![Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml/badge.svg?branch=main)](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-The badge displayed on my repository indicates the status of the deployment verification workflow as executed on the latest commit to the main branch.
+This repository deploys **Zammad** — an open-source helpdesk and ticketing system — behind **Traefik** with automatic **Let's Encrypt TLS**: nginx, rails server, scheduler, and websocket services from the official image, backed by **PostgreSQL 17**, **Elasticsearch**, **Redis**, and **memcached**, with a daily **backup** service (database + storage).
 
-**Passing**: This means the most recent commit has successfully passed all deployment checks, confirming that the Docker Compose setup functions correctly as designed.
+## Getting started
 
-📙 The complete installation guide is available on my [website](https://www.heyvaldemar.com/install-zammad-using-docker-compose/).
+You need two DNS records pointing at this server: the app hostname and the websocket hostname.
 
-❗ Change variables in the `.env` to meet your requirements.
+```bash
+# 1. Clone
+git clone https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose
+cd zammad-traefik-letsencrypt-docker-compose
 
-💡 Note that the `.env` file should be in the same directory as `zammad-traefik-letsencrypt-docker-compose.yml`.
+# 2. Create the two Docker networks the stack expects
+docker network create traefik-network
+docker network create zammad-network
 
-Create networks for your services before deploying the configuration using the commands:
+# 3. Copy the environment template and fill in required values
+cp .env.example .env
+$EDITOR .env
+# ^ Required: ZAMMAD_DB_PASSWORD, both hostnames, TRAEFIK_HOSTNAME,
+#   TRAEFIK_ACME_EMAIL, TRAEFIK_BASIC_AUTH.
 
-`docker network create traefik-network`
+# 4. Deploy
+docker compose -f zammad-traefik-letsencrypt-docker-compose.yml -p zammad up -d
+```
 
-`docker network create zammad-network`
+First start takes several minutes: the `init` service migrates and seeds the database. Then `https://${ZAMMAD_HOSTNAME}` serves the setup wizard — create the admin account right away.
 
-Adjust the `vm.max_map_count` using the commands:
+### What success looks like
 
-`sudo sysctl -w vm.max_map_count=262144`
+```bash
+docker compose -f zammad-traefik-letsencrypt-docker-compose.yml -p zammad ps
+curl -fsk "https://${ZAMMAD_HOSTNAME}/api/v1/getting_started"   # {"setup_done":...}
+```
 
-To make the `backup.sh` script executable, run the following command:
+### Common first-deploy issues
 
-`chmod +x scripts/backup.sh`
+- **502/404 in the first minutes.** Normal — init is still seeding the database. Watch `docker logs zammad-init-1`.
+- **Cert issuance fails.** DNS hasn't propagated for one of the two hostnames, or port 80 isn't reachable.
+- **Search doesn't find tickets.** Elasticsearch needs a minute to build its index after setup; check `docker logs zammad-elasticsearch-1`.
+- **Networks not found.** Step 2 was skipped.
 
-Deploy Zammad using Docker Compose:
+## Supply chain trust
 
-`docker compose -f zammad-traefik-letsencrypt-docker-compose.yml -p zammad up -d`
+Six images — [`traefik`](https://hub.docker.com/_/traefik), [`ghcr.io/zammad/zammad`](https://github.com/zammad/zammad), [`postgres`](https://hub.docker.com/_/postgres), [`elasticsearch`](https://hub.docker.com/_/elasticsearch), [`redis`](https://hub.docker.com/_/redis), [`memcached`](https://hub.docker.com/_/memcached) — pinned to `tag@sha256:<digest>` as interpolation defaults in the compose `x-images` block. `git pull` alone delivers the tested combination; an `*_IMAGE_TAG` variable in `.env` overrides deliberately.
 
-## Author
+The weekly `check-pin-freshness` CI job re-resolves each pin against its registry and compares the pinned Zammad and Traefik versions against the latest upstream releases. GitHub Actions are pinned by commit SHA; Dependabot keeps those fresh.
 
-hey everyone,
+## Production checklist
 
-💾 I’ve been in the IT game for over 20 years, cutting my teeth with some big names like [IBM](https://www.linkedin.com/in/heyvaldemar/), [Thales](https://www.linkedin.com/in/heyvaldemar/), and [Amazon](https://www.linkedin.com/in/heyvaldemar/). These days, I wear the hat of a DevOps Consultant and Team Lead, but what really gets me going is Docker and container technology - I’m kind of obsessed!
+- [ ] **Complete the setup wizard immediately after deploy** — it creates the admin account.
+- [ ] **Strong database password**; regenerate the Traefik dashboard hash.
+- [ ] **Size the host for Elasticsearch** — 4 GB+ RAM for the stack; the ES heap is capped at 512 MB by default, raise `ES_JAVA_OPTS` for real ticket volume.
+- [ ] **Host-mount the backup volume** (`zammad-backup`) for disaster recovery — and verify backups actually appear after the first `BACKUP_TIME`.
+- [ ] **Back up before upgrades** — Zammad migrates its schema on version jumps.
 
-💛 I have my own IT [blog](https://www.heyvaldemar.com/), where I’ve built a [community](https://discord.gg/AJQGCCBcqf) of DevOps enthusiasts who share my love for all things Docker, containers, and IT technologies in general. And to make sure everyone can jump on this awesome DevOps train, I write super detailed guides (seriously, they’re foolproof!) that help even newbies deploy and manage complex IT solutions.
+## Backups
 
-🚀 My dream is to empower every single person in the DevOps community to squeeze every last drop of potential out of Docker and container tech.
+The `backup` service runs Zammad's own backup loop daily at `BACKUP_TIME` (default 03:00): a `pg_dump` of the database plus a tarball of `/opt/zammad/storage`, kept for `HOLD_DAYS` (default 10). Both land in the `zammad-backup` volume.
 
-🐳 As a [Docker Captain](https://www.docker.com/captains/vladimir-mikhalev/), I’m stoked to share my knowledge, experiences, and a good dose of passion for the tech. My aim is to encourage learning, innovation, and growth, and to inspire the next generation of IT whizz-kids to push Docker and container tech to its limits.
+Worth knowing: before v1.0.0 the backup service was not attached to the network where PostgreSQL lives, so the scheduled dump never succeeded. If you ran an earlier revision, check your backup volume for recent files.
 
-Let’s do this together!
+## Testing
 
-## My 2D Portfolio
+The [Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml?query=branch%3Amain) workflow runs on every push, pull request, and every Monday at 06:00 UTC: shellcheck + actionlint, Trivy scans of all six pinned images, the weekly freshness check, and a deploy-and-test job that boots the full stack with ephemeral credentials, waits out database seeding, and requires the Zammad API to answer through Traefik.
 
-🕹️ Click into [sre.gg](https://www.sre.gg/) — my virtual space is a 2D pixel-art portfolio inviting you to interact with elements that encapsulate the milestones of my DevOps career.
+## Security Notes
 
-## My Courses
+- Credentials are read from `.env` at deploy time; `.env` is gitignored and compose fails fast on missing required variables.
+- **Pre-rotation advisory.** Releases before v1.0.0 (2026-09-01) shipped a tracked `.env` with a generated-looking database password (it also appeared as a fallback inside the backup script). Rotate it if your deployment reused it.
+- PostgreSQL, Elasticsearch, Redis, and memcached listen only on the internal network; Elasticsearch runs with security disabled by design inside that isolated network.
 
-🎓 Dive into my [comprehensive IT courses](https://www.heyvaldemar.com/courses/) designed for enthusiasts and professionals alike. Whether you're looking to master Docker, conquer Kubernetes, or advance your DevOps skills, my courses provide a structured pathway to enhancing your technical prowess.
+---
 
-🔑 [Each course](https://www.udemy.com/user/heyvaldemar/) is built from the ground up with real-world scenarios in mind, ensuring that you gain practical knowledge and hands-on experience. From beginners to seasoned professionals, there's something here for everyone to elevate their IT skills.
-
-## My Services
-
-💼 Take a look at my [service catalog](https://www.heyvaldemar.com/services/) and find out how we can make your technological life better. Whether it's increasing the efficiency of your IT infrastructure, advancing your career, or expanding your technological horizons — I'm here to help you achieve your goals. From DevOps transformations to building gaming computers — let's make your technology unparalleled!
-
-## Patreon Exclusives
-
-🏆 Join my [Patreon](https://www.patreon.com/heyvaldemar) and dive deep into the world of Docker and DevOps with exclusive content tailored for IT enthusiasts and professionals. As your experienced guide, I offer a range of membership tiers designed to suit everyone from newbies to IT experts.
-
-## My Recommendations
-
-📕 Check out my collection of [essential DevOps books](https://kit.co/heyvaldemar/essential-devops-books)\
-🖥️ Check out my [studio streaming and recording kit](https://kit.co/heyvaldemar/my-studio-streaming-and-recording-kit)\
-📡 Check out my [streaming starter kit](https://kit.co/heyvaldemar/streaming-starter-kit)
-
-## Follow Me
-
-🎬 [YouTube](https://www.youtube.com/channel/UCf85kQ0u1sYTTTyKVpxrlyQ?sub_confirmation=1)\
-🐦 [X / Twitter](https://twitter.com/heyvaldemar)\
-🎨 [Instagram](https://www.instagram.com/heyvaldemar/)\
-🐘 [Mastodon](https://mastodon.social/@heyvaldemar)\
-🧵 [Threads](https://www.threads.net/@heyvaldemar)\
-🎸 [Facebook](https://www.facebook.com/heyvaldemarFB/)\
-🧊 [Bluesky](https://bsky.app/profile/heyvaldemar.bsky.social)\
-🎥 [TikTok](https://www.tiktok.com/@heyvaldemar)\
-💻 [LinkedIn](https://www.linkedin.com/in/heyvaldemar/)\
-📣 [daily.dev Squad](https://app.daily.dev/squads/devopscompass)\
-🧩 [LeetCode](https://leetcode.com/u/heyvaldemar/)\
-🐈 [GitHub](https://github.com/heyvaldemar)
-
-## Community of IT Experts
-
-👾 [Discord](https://discord.gg/AJQGCCBcqf)
-
-## Refill My Coffee Supplies
-
-💖 [PayPal](https://www.paypal.com/paypalme/heyvaldemarCOM)\
-🏆 [Patreon](https://www.patreon.com/heyvaldemar)\
-💎 [GitHub](https://github.com/sponsors/heyvaldemar)\
-🥤 [BuyMeaCoffee](https://www.buymeacoffee.com/heyvaldemar)\
-🍪 [Ko-fi](https://ko-fi.com/heyvaldemar)
-
-🌟 **Bitcoin (BTC):** bc1q2fq0k2lvdythdrj4ep20metjwnjuf7wccpckxc\
-🔹 **Ethereum (ETH):** 0x76C936F9366Fad39769CA5285b0Af1d975adacB8\
-🪙 **Binance Coin (BNB):** bnb1xnn6gg63lr2dgufngfr0lkq39kz8qltjt2v2g6\
-💠 **Litecoin (LTC):** LMGrhx8Jsx73h1pWY9FE8GB46nBytjvz8g
+## About the maintainer
 
 <div align="center">
 
-### Show some 💜 by starring some of the [repositories](https://github.com/heyValdemar?tab=repositories)!
+**Maintained by [Vladimir Mikhalev](https://github.com/heyvaldemar)** — Docker Captain · IBM Champion · AWS Community Builder
 
-![octocat](https://user-images.githubusercontent.com/10498744/210113490-e2fad07f-4488-4da8-a656-b9abbdd8cb26.gif)
+[YouTube](https://www.youtube.com/channel/UCf85kQ0u1sYTTTyKVpxrlyQ?sub_confirmation=1) · [Blog](https://heyvaldemar.com) · [LinkedIn](https://www.linkedin.com/in/heyvaldemar/)
 
 </div>
-
-![footer](https://user-images.githubusercontent.com/10498744/210157572-1fca0242-8af2-46a6-bfa3-666ffd40ebde.svg)

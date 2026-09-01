@@ -12,7 +12,7 @@ set -e
 : "${POSTGRESQL_HOST:=postgres}"
 : "${POSTGRESQL_PORT:=5432}"
 : "${POSTGRESQL_USER:=zammaddbuser}"
-: "${POSTGRESQL_PASS:=PtNneCEtAWrFkYeRmFvwLgA}"
+: "${POSTGRESQL_PASS:?POSTGRESQL_PASS must be provided via the container environment}"
 
 
 function check_railsserver_available {

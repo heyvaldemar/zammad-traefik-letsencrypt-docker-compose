@@ -1,3 +1,18 @@
+# Image pins live HERE, as interpolation defaults, so `git pull` (or
+# re-downloading this file) delivers the exact version combination this
+# repository has tested — no .env editing required. Setting the matching
+# variable in .env overrides the default for anyone who wants to pin
+# differently; .env itself carries only secrets and deliberate overrides.
+# CI (Trivy scans, check-pin-freshness, the ephemeral test .env) reads
+# the pins from these lines — this block is the single source of truth.
+x-images:
+  traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:3.7@sha256:9c2a54d87f76f5c2f5f2682c68394af92fb12c0a2686798d6462a3f84bd78eaf}
+  postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:17-alpine@sha256:18cfe3ef5e6815560c98237d6216d1e5119702fb0f3894c8785dd58b8bbe5d73}
+  elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:8.19.20@sha256:7c6a3d514563848873ae3e0e2e36502382842ebae38134a59e91214e8fcdabf3}
+  memcached: &memcached-image ${ZAMMAD_MEMCACHE_IMAGE_TAG:-memcached:1.6-alpine@sha256:c29847751abb41f4c268c84fb3087fee05d4edcbda44409ccb5086e26148e8a7}
+  redis: &redis-image ${ZAMMAD_REDIS_IMAGE_TAG:-redis:7.4@sha256:71da9275c5f3fcb97d0fa0c8c5b36cc995327265420f17a04bfd544f458059f7}
+  zammad: &zammad-image ${ZAMMAD_IMAGE_TAG:-ghcr.io/zammad/zammad:7.1.3@sha256:1f221ee8df5e84392542a5e3673312548429e87cda055f0fa34eeaca4ff7b94d}
+
 networks:
   zammad-network:
     external: true
@@ -14,18 +29,18 @@ volumes:
 
 services:
   postgres:
-    image: ${ZAMMAD_POSTGRES_IMAGE_TAG}
+    image: *postgres-image
     command: postgres -c 'max_connections=50'
     volumes:
       - zammad-postgres:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${ZAMMAD_DB_NAME}
-      POSTGRES_USER: ${ZAMMAD_DB_USER}
-      POSTGRES_PASSWORD: ${ZAMMAD_DB_PASSWORD}
+      POSTGRES_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRES_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
+      POSTGRES_PASSWORD: ${ZAMMAD_DB_PASSWORD:?set in .env - see .env.example for generation command}
     networks:
       - zammad-network
     healthcheck:
-      test: [ "CMD", "pg_isready", "-q", "-d", "${ZAMMAD_DB_NAME}", "-U", "${ZAMMAD_DB_USER}" ]
+      test: [ "CMD", "pg_isready", "-q", "-d", "${ZAMMAD_DB_NAME:-zammaddb}", "-U", "${ZAMMAD_DB_USER:-zammaddbuser}" ]
       interval: 10s
       timeout: 5s
       retries: 3
@@ -33,7 +48,7 @@ services:
     restart: unless-stopped
 
   redis:
-    image: ${ZAMMAD_REDIS_IMAGE_TAG}
+    image: *redis-image
     volumes:
       - redis-data:/data
     networks:
@@ -47,38 +62,45 @@ services:
     restart: unless-stopped
 
   elasticsearch:
-    image: ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG}
+    image: *elasticsearch-image
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
     volumes:
       - elasticsearch-data:/usr/share/elasticsearch/data
     networks:
       - zammad-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 120s
     restart: unless-stopped
 
   memcached:
     command: memcached -m 256M
-    image: ${ZAMMAD_MEMCACHE_IMAGE_TAG}
+    image: *memcached-image
     networks:
       - zammad-network
     restart: unless-stopped
 
   init:
-    image: ${ZAMMAD_IMAGE_TAG}
+    image: *zammad-image
     command: ["zammad-init"]
     user: 0:0
     volumes:
       - zammad-storage:/opt/zammad/storage
     environment:
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
       POSTGRESQL_OPTIONS: ?pool=50
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
     networks:
       - zammad-network
     restart: on-failure
@@ -86,7 +108,7 @@ services:
       - postgres
 
   zammad:
-    image: ${ZAMMAD_IMAGE_TAG}
+    image: *zammad-image
     command: ["zammad-nginx"]
     environment:
       NGINX_PORT: 8080
@@ -96,17 +118,17 @@ services:
       ZAMMAD_WEBSOCKET_PORT: 6042
       RAILS_TRUSTED_PROXIES: '127.0.0.1, ::1, traefik'
       NGINX_SERVER_SCHEME: https
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
-      ELASTICSEARCH_ENABLED: ${ZAMMAD_ELASTICSEARCH_ENABLED}
-      ELASTICSEARCH_HOST: ${ZAMMAD_ELASTICSEARCH_HOST}
-      ELASTICSEARCH_PORT: ${ZAMMAD_ELASTICSEARCH_PORT}
-      ELASTICSEARCH_SSL_VERIFY: ${ZAMMAD_ELASTICSEARCH_SSL_VERIFY}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
+      ELASTICSEARCH_ENABLED: ${ZAMMAD_ELASTICSEARCH_ENABLED:-true}
+      ELASTICSEARCH_HOST: ${ZAMMAD_ELASTICSEARCH_HOST:-elasticsearch}
+      ELASTICSEARCH_PORT: ${ZAMMAD_ELASTICSEARCH_PORT:-9200}
+      ELASTICSEARCH_SSL_VERIFY: ${ZAMMAD_ELASTICSEARCH_SSL_VERIFY:-true}
     networks:
       - zammad-network
       - traefik-network
@@ -114,7 +136,7 @@ services:
       # Enable Traefik for this container
       - "traefik.enable=true"
       # Match incoming requests on a specific hostname
-      - "traefik.http.routers.zammad.rule=Host(`${ZAMMAD_HOSTNAME}`)"
+      - "traefik.http.routers.zammad.rule=Host(`${ZAMMAD_HOSTNAME:?set in .env - see .env.example}`)"
       # Assign the router to a named Traefik service
       - "traefik.http.routers.zammad.service=zammad"
       # Use the 'websecure' (HTTPS) entry point
@@ -148,17 +170,17 @@ services:
       - railsserver
 
   railsserver:
-    image: ${ZAMMAD_IMAGE_TAG}
+    image: *zammad-image
     command: ["zammad-railsserver"]
     environment:
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
       POSTGRESQL_OPTIONS: ?pool=50
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
     networks:
       - zammad-network
     restart: unless-stopped
@@ -168,17 +190,17 @@ services:
       - redis
 
   scheduler:
-    image: ${ZAMMAD_IMAGE_TAG}
+    image: *zammad-image
     command: ["zammad-scheduler"]
     environment:
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
       POSTGRESQL_OPTIONS: ?pool=50
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
     networks:
       - zammad-network
     restart: unless-stopped
@@ -188,17 +210,17 @@ services:
       - redis
 
   websocket:
-    image: ${ZAMMAD_IMAGE_TAG}
+    image: *zammad-image
     command: ["zammad-websocket"]
     environment:
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
       POSTGRESQL_OPTIONS: ?pool=50
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
     networks:
       - zammad-network
       - traefik-network
@@ -206,7 +228,7 @@ services:
       # Enable Traefik for this container
       - "traefik.enable=true"
       # Match incoming requests on a specific hostname
-      - "traefik.http.routers.zammad-websocket.rule=Host(`${ZAMMAD_WEBSOCKET_HOSTNAME}`)"
+      - "traefik.http.routers.zammad-websocket.rule=Host(`${ZAMMAD_WEBSOCKET_HOSTNAME:?set in .env - see .env.example}`)"
       # Assign the router to a named Traefik service
       - "traefik.http.routers.zammad-websocket.service=zammad-websocket"
       # Use the 'websecure' (HTTPS) entry point
@@ -232,10 +254,10 @@ services:
       - redis
 
   traefik:
-    image: ${TRAEFIK_IMAGE_TAG}
+    image: *traefik-image
     command:
       # Set the log level (DEBUG, INFO, WARN, ERROR)
-      - "--log.level=${TRAEFIK_LOG_LEVEL}"
+      - "--log.level=${TRAEFIK_LOG_LEVEL:-WARN}"
       # Enable the built-in API and web-based dashboard
       - "--api.dashboard=true"
       # Enable the /ping endpoint so we can health-check Traefik
@@ -260,7 +282,7 @@ services:
       # Use ACME (Let's Encrypt) to generate/renew certificates via TLS challenge
       - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
       # The email address used by Let's Encrypt for renewal notices
-      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL:?set in .env - see .env.example}"
       # The file where ACME certificates are stored inside the container
       - "--certificatesresolvers.letsencrypt.acme.storage=/etc/traefik/acme/acme.json"
       # Enable Prometheus metrics
@@ -289,14 +311,14 @@ services:
       # Enable Traefik for this container
       - "traefik.enable=true"
       # A router to expose the Traefik dashboard
-      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_HOSTNAME}`)"
+      - "traefik.http.routers.dashboard.rule=Host(`${TRAEFIK_HOSTNAME:?set in .env - see .env.example}`)"
       - "traefik.http.routers.dashboard.entrypoints=websecure"
       - "traefik.http.routers.dashboard.tls=true"
       - "traefik.http.routers.dashboard.tls.certresolver=letsencrypt"
       - "traefik.http.routers.dashboard.service=api@internal"
       # Basic Authentication for the Traefik dashboard
       - "traefik.http.routers.dashboard.middlewares=authtraefik"
-      - "traefik.http.middlewares.authtraefik.basicauth.users=${TRAEFIK_BASIC_AUTH}"
+      - "traefik.http.middlewares.authtraefik.basicauth.users=${TRAEFIK_BASIC_AUTH:?set in .env - see .env.example for htpasswd generation}"
       # Specify the internal server port to the dashboard service
       - "traefik.http.services.dashboard.loadbalancer.server.port=8080"
       # Pass the original Host header to the backend
@@ -304,7 +326,7 @@ services:
     restart: unless-stopped
 
   backup:
-    image: ${ZAMMAD_POSTGRES_IMAGE_TAG}
+    image: *postgres-image
     entrypoint: /usr/local/bin/backup.sh
     command: ["zammad-backup"]
     volumes:
@@ -312,17 +334,22 @@ services:
       - zammad-storage:/opt/zammad/storage:ro
       - ./scripts/backup.sh:/usr/local/bin/backup.sh:ro
     environment:
-      POSTGRESQL_DB: ${ZAMMAD_DB_NAME}
-      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST}
-      POSTGRESQL_USER: ${ZAMMAD_DB_USER}
+      POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
+      POSTGRESQL_HOST: ${ZAMMAD_POSTGRES_HOST:-postgres}
+      POSTGRESQL_USER: ${ZAMMAD_DB_USER:-zammaddbuser}
       POSTGRESQL_PASS: ${ZAMMAD_DB_PASSWORD}
-      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT}
+      POSTGRESQL_PORT: ${ZAMMAD_DB_PORT:-5432}
       POSTGRESQL_OPTIONS: ?pool=50
-      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS}
-      REDIS_URL: ${ZAMMAD_REDIS_URL}
-      BACKUP_TIME: ${BACKUP_TIME}
-      HOLD_DAYS: ${HOLD_DAYS}
-      TZ: ${ZAMMAD_TIMEZONE}
+      MEMCACHE_SERVERS: ${ZAMMAD_MEMCACHE_SERVERS:-memcached:11211}
+      REDIS_URL: ${ZAMMAD_REDIS_URL:-redis://redis:6379}
+      BACKUP_TIME: ${BACKUP_TIME:-03:00}
+      HOLD_DAYS: ${HOLD_DAYS:-10}
+      TZ: ${ZAMMAD_TIMEZONE:-America/New_York}
+    # zammad-network is required: without it the service landed on the
+    # compose default network, where the postgres hostname does not
+    # resolve — every scheduled backup failed on DNS.
+    networks:
+      - zammad-network
     restart: unless-stopped
     depends_on:
       - railsserver
