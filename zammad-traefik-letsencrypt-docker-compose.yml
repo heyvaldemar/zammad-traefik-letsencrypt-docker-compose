@@ -30,6 +30,16 @@ volumes:
 services:
   postgres:
     image: *postgres-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_POSTGRES_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_POSTGRES_MEMORY_LIMIT:-1g}
+          cpus: "${ZAMMAD_POSTGRES_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${ZAMMAD_POSTGRES_MEMORY_RESERVATION:-128m}
+          cpus: "${ZAMMAD_POSTGRES_CPU_RESERVATION:-0.25}"
     command: postgres -c 'max_connections=50'
     volumes:
       - zammad-postgres:/var/lib/postgresql/data
@@ -49,6 +59,16 @@ services:
 
   redis:
     image: *redis-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_REDIS_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_REDIS_MEMORY_LIMIT:-256m}
+          cpus: "${ZAMMAD_REDIS_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${ZAMMAD_REDIS_MEMORY_RESERVATION:-32m}
+          cpus: "${ZAMMAD_REDIS_CPU_RESERVATION:-0.1}"
     volumes:
       - redis-data:/data
     networks:
@@ -63,6 +83,16 @@ services:
 
   elasticsearch:
     image: *elasticsearch-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_ELASTICSEARCH_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_ELASTICSEARCH_MEMORY_LIMIT:-2g}
+          cpus: "${ZAMMAD_ELASTICSEARCH_CPU_LIMIT:-2.0}"
+        reservations:
+          memory: ${ZAMMAD_ELASTICSEARCH_MEMORY_RESERVATION:-256m}
+          cpus: "${ZAMMAD_ELASTICSEARCH_CPU_RESERVATION:-0.5}"
     environment:
       - discovery.type=single-node
       - xpack.security.enabled=false
@@ -82,12 +112,32 @@ services:
   memcached:
     command: memcached -m 256M
     image: *memcached-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_MEMCACHED_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_MEMCACHED_MEMORY_LIMIT:-256m}
+          cpus: "${ZAMMAD_MEMCACHED_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${ZAMMAD_MEMCACHED_MEMORY_RESERVATION:-32m}
+          cpus: "${ZAMMAD_MEMCACHED_CPU_RESERVATION:-0.1}"
     networks:
       - zammad-network
     restart: unless-stopped
 
   init:
     image: *zammad-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_INIT_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_INIT_MEMORY_LIMIT:-1g}
+          cpus: "${ZAMMAD_INIT_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${ZAMMAD_INIT_MEMORY_RESERVATION:-128m}
+          cpus: "${ZAMMAD_INIT_CPU_RESERVATION:-0.25}"
     command: ["zammad-init"]
     user: 0:0
     volumes:
@@ -109,6 +159,16 @@ services:
 
   zammad:
     image: *zammad-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_MEMORY_LIMIT:-2g}
+          cpus: "${ZAMMAD_CPU_LIMIT:-2.0}"
+        reservations:
+          memory: ${ZAMMAD_MEMORY_RESERVATION:-256m}
+          cpus: "${ZAMMAD_CPU_RESERVATION:-0.5}"
     command: ["zammad-nginx"]
     environment:
       NGINX_PORT: 8080
@@ -171,6 +231,16 @@ services:
 
   railsserver:
     image: *zammad-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_RAILSSERVER_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_RAILSSERVER_MEMORY_LIMIT:-1g}
+          cpus: "${ZAMMAD_RAILSSERVER_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${ZAMMAD_RAILSSERVER_MEMORY_RESERVATION:-128m}
+          cpus: "${ZAMMAD_RAILSSERVER_CPU_RESERVATION:-0.25}"
     command: ["zammad-railsserver"]
     environment:
       POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
@@ -191,6 +261,16 @@ services:
 
   scheduler:
     image: *zammad-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_SCHEDULER_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_SCHEDULER_MEMORY_LIMIT:-1g}
+          cpus: "${ZAMMAD_SCHEDULER_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${ZAMMAD_SCHEDULER_MEMORY_RESERVATION:-128m}
+          cpus: "${ZAMMAD_SCHEDULER_CPU_RESERVATION:-0.25}"
     command: ["zammad-scheduler"]
     environment:
       POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
@@ -211,6 +291,16 @@ services:
 
   websocket:
     image: *zammad-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_WEBSOCKET_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_WEBSOCKET_MEMORY_LIMIT:-1g}
+          cpus: "${ZAMMAD_WEBSOCKET_CPU_LIMIT:-1.0}"
+        reservations:
+          memory: ${ZAMMAD_WEBSOCKET_MEMORY_RESERVATION:-128m}
+          cpus: "${ZAMMAD_WEBSOCKET_CPU_RESERVATION:-0.25}"
     command: ["zammad-websocket"]
     environment:
       POSTGRESQL_DB: ${ZAMMAD_DB_NAME:-zammaddb}
@@ -255,6 +345,16 @@ services:
 
   traefik:
     image: *traefik-image
+    # Resource limits as .env-overridable defaults (e.g. TRAEFIK_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${TRAEFIK_MEMORY_LIMIT:-256m}
+          cpus: "${TRAEFIK_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${TRAEFIK_MEMORY_RESERVATION:-64m}
+          cpus: "${TRAEFIK_CPU_RESERVATION:-0.1}"
     command:
       # Set the log level (DEBUG, INFO, WARN, ERROR)
       - "--log.level=${TRAEFIK_LOG_LEVEL:-WARN}"
@@ -327,6 +427,16 @@ services:
 
   backup:
     image: *postgres-image
+    # Resource limits as .env-overridable defaults (e.g. ZAMMAD_BACKUP_MEMORY_LIMIT=2g);
+    # the override survives every git pull.
+    deploy:
+      resources:
+        limits:
+          memory: ${ZAMMAD_BACKUP_MEMORY_LIMIT:-256m}
+          cpus: "${ZAMMAD_BACKUP_CPU_LIMIT:-0.5}"
+        reservations:
+          memory: ${ZAMMAD_BACKUP_MEMORY_RESERVATION:-32m}
+          cpus: "${ZAMMAD_BACKUP_CPU_RESERVATION:-0.1}"
     entrypoint: /usr/local/bin/backup.sh
     command: ["zammad-backup"]
     volumes:
