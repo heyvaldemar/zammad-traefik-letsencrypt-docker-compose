@@ -9,6 +9,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _(no unreleased changes yet)_
 
+## [1.3.0] - 2026-09-02
+
+### Fixed
+
+- **A failed database dump no longer produces a silent, corrupt backup.**
+  `scripts/backup.sh` piped `pg_dump` into `gzip` under `set -e` without
+  `pipefail`, so a dump that failed halfway still left a small `.gz`
+  that looked like a backup. The script now runs with `pipefail`, logs
+  `Database backup OK: <file> (<bytes> bytes)` / `Data backup OK` or
+  `FAILED` per cycle, and keeps a failed dump as `<file>.failed` for
+  diagnosis. A file changing while the storage archive is written (GNU
+  `tar` exit 1) is not a failure.
+
+### Added
+
+- CI now waits for the first backup cycle and proves the produced dump
+  and storage archive are readable.
+
 ## [1.2.0] - 2026-09-02
 
 ### Added
@@ -71,7 +89,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.2.0...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.3.0...HEAD
+[1.3.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.2.0...v1.3.0
 [1.2.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.1.0...v1.2.0
 [1.1.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/releases/tag/v1.0.0

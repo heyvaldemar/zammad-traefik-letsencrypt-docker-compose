@@ -238,6 +238,19 @@ jobs:
           done'
           curl -fsk "https://$APP_HOSTNAME/api/v1/getting_started" | head -c 200; echo
 
+      - name: Verify a backup is produced and valid
+        # The backup service dumps once right after the rails server is up,
+        # then daily at BACKUP_TIME; the first cycle is what CI checks.
+        run: |
+          # shellcheck disable=SC2016
+          timeout 8m bash -c 'until docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" logs backup 2>/dev/null | grep -q "Database backup OK"; do echo "Waiting for the first backup cycle..."; sleep 10; done'
+          db=$(docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" logs backup 2>/dev/null | grep "Database backup OK" | tail -1 | sed -E 's/.*Database backup OK: ([^ ]+) .*/\1/')
+          docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" exec -T backup sh -c "gunzip -t '$db' && gunzip -c '$db' | head -5 | grep -qE 'PostgreSQL database dump'" && echo "Database backup valid: $db"
+          data=$(docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" logs backup 2>/dev/null | grep "Data backup OK" | tail -1 | sed -E 's/.*Data backup OK: ([^ ]+) .*/\1/')
+          [ -n "$data" ] || { echo "::error::no 'Data backup OK' line - the storage archive failed"; exit 1; }
+          docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" exec -T backup sh -c "tar -tzf '$data' > /dev/null" && echo "Data backup valid: $data"
+          docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" logs backup 2>/dev/null | grep -i "backup FAILED" && { echo "::error::the backup log reports a failure"; exit 1; } || true
+
       - name: Wait for the Traefik dashboard to be ready
         run: |
           # shellcheck disable=SC2016

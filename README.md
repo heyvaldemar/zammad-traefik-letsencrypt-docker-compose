@@ -60,7 +60,7 @@ The weekly `check-pin-freshness` CI job re-resolves each pin against its registr
 
 ## Backups
 
-The `backup` service runs Zammad's own backup loop daily at `BACKUP_TIME` (default 03:00): a `pg_dump` of the database plus a tarball of `/opt/zammad/storage`, kept for `HOLD_DAYS` (default 10). Both land in the `zammad-backup` volume.
+The `backup` service runs Zammad's own backup loop daily at `BACKUP_TIME` (default 03:00): a `pg_dump` of the database plus a tarball of `/opt/zammad/storage`, kept for `HOLD_DAYS` (default 10). Both land in the `zammad-backup` volume. Each cycle logs `Database backup OK: <file> (<bytes> bytes)` and `Data backup OK` (or `FAILED`, keeping a failed dump as `<file>.failed`); grep the `backup` service log for `FAILED` from your monitoring.
 
 Worth knowing: before v1.0.0 the backup service was not attached to the network where PostgreSQL lives, so the scheduled dump never succeeded. If you ran an earlier revision, check your backup volume for recent files.
 

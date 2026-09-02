@@ -1,6 +1,9 @@
 #!/bin/bash
 
-set -e
+# A failed pg_dump must never leave a small .gz that looks like a backup:
+# pipefail makes the dump's exit status the pipeline's, and every cycle
+# logs OK or FAILED so monitoring has a line to grep.
+set -eo pipefail
 
 : "${ZAMMAD_DIR:=/opt/zammad/storage}"
 : "${BACKUP_DIR:=/var/tmp/zammad}"
@@ -33,13 +36,25 @@ function zammad_backup {
   fi
 
   if [ "${NO_FILE_BACKUP}" != "yes" ]; then
-    # tar files
-    tar -czf "${BACKUP_DIR}"/"${TIMESTAMP}"_zammad_files.tar.gz "${ZAMMAD_DIR}"
+    # tar files; GNU tar exits 1 when a live file changed mid-read, which is
+    # still a complete archive - only exit 2 is a real failure
+    DATA_FILE="${BACKUP_DIR}/${TIMESTAMP}_zammad_files.tar.gz"
+    tar -czf "${DATA_FILE}" "${ZAMMAD_DIR}" && RC=0 || RC=$?
+    if [ "$RC" -eq 0 ] || [ "$RC" -eq 1 ]; then
+      echo "[$(date -Iseconds)] Data backup OK: ${DATA_FILE} ($(stat -c %s "${DATA_FILE}") bytes)"
+    else
+      echo "[$(date -Iseconds)] Data backup FAILED - partial file kept as ${DATA_FILE}.failed for diagnosis" >&2
+      mv "${DATA_FILE}" "${DATA_FILE}.failed" 2>/dev/null || true
+    fi
   fi
-
   #db backup
-  pg_dump --dbname=postgresql://"${POSTGRESQL_USER}:${POSTGRESQL_PASS}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DB}" | gzip > "${BACKUP_DIR}"/"${TIMESTAMP}"_zammad_db.psql.gz
-
+  DB_FILE="${BACKUP_DIR}/${TIMESTAMP}_zammad_db.psql.gz"
+  if pg_dump --dbname=postgresql://"${POSTGRESQL_USER}:${POSTGRESQL_PASS}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DB}" | gzip > "${DB_FILE}"; then
+    echo "[$(date -Iseconds)] Database backup OK: ${DB_FILE} ($(stat -c %s "${DB_FILE}") bytes)"
+  else
+    echo "[$(date -Iseconds)] Database backup FAILED - partial file kept as ${DB_FILE}.failed for diagnosis" >&2
+    mv "${DB_FILE}" "${DB_FILE}.failed" 2>/dev/null || true
+  fi
   echo "backup finished :)"
 }
 
