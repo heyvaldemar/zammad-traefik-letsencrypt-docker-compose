@@ -84,7 +84,7 @@ jobs:
         env:
           ENV_VAR: ${{ matrix.env_var }}
         run: |
-          image="$(grep -oE "\\$\\{${ENV_VAR}:-[^}]+\\}" zammad-traefik-letsencrypt-docker-compose.yml | head -1 | sed -E "s/^\\$\\{${ENV_VAR}:-//; s/\\}$//")"
+          image="$(grep -m1 -oE "\\$\\{${ENV_VAR}:-.*" zammad-traefik-letsencrypt-docker-compose.yml | sed -E -e ':a' -e 's/\$\{[A-Z_]+:-([^{}]*)\}/\1/' -e 'ta')"
           if [ -z "$image" ]; then
             echo "${ENV_VAR} default not found in the compose x-images block" >&2
             exit 1
@@ -127,7 +127,7 @@ jobs:
         run: |
           status=0
           for var in ZAMMAD_POSTGRES_IMAGE_TAG ZAMMAD_REDIS_IMAGE_TAG ZAMMAD_ELASTICSEARCH_IMAGE_TAG ZAMMAD_MEMCACHE_IMAGE_TAG ZAMMAD_IMAGE_TAG TRAEFIK_IMAGE_TAG; do
-            pin="$(grep -oE "\\$\\{${var}:-[^}]+\\}" zammad-traefik-letsencrypt-docker-compose.yml | head -1 | sed -E "s/^\\$\\{${var}:-//; s/\\}$//")"
+            pin="$(grep -m1 -oE "\\$\\{${var}:-.*" zammad-traefik-letsencrypt-docker-compose.yml | sed -E -e ':a' -e 's/\$\{[A-Z_]+:-([^{}]*)\}/\1/' -e 'ta')"
             ref="${pin%%@*}"
             pinned_digest="${pin##*@}"
             current_digest="$(docker buildx imagetools inspect "$ref" --format '{{json .Manifest}}' | jq -r .digest)"
