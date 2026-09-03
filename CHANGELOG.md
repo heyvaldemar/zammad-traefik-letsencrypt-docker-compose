@@ -59,7 +59,7 @@ _(no unreleased changes yet)_
 
 ### Added
 
-- **`update.sh`** — unattended updates to the newest tagged release,
+- **`update.sh`**: unattended updates to the newest tagged release,
   and nothing else: a tag is cut only after CI has booted the pinned
   images and passed the smoke tests, so "update to the latest tag" means
   "update to a combination a machine has already run". It refuses to
@@ -75,7 +75,7 @@ v1.2.0.
 
 ### Fixed (the scheduled backup never ran)
 
-- **The backup service was not on the `zammad-network`** — compose placed
+- **The backup service was not on the `zammad-network`**: compose placed
   it on the project-default network, where the `postgres` hostname does
   not resolve, so every scheduled `pg_dump` failed on DNS. If you
   deployed an earlier revision, check that your backup volume actually
@@ -85,7 +85,7 @@ v1.2.0.
 
 ### Changed (BREAKING for existing deployments)
 
-- **Zammad 6.5 → 7.1.3** (a major upgrade — Zammad migrates its schema on
+- **Zammad 6.5 → 7.1.3** (a major upgrade: Zammad migrates its schema on
   first start; back up first and expect a longer initial boot),
   **Elasticsearch 8.17 → 8.19**, **Traefik 3.2 → 3.7** (3.2's Docker
   client cannot talk to Docker Engine 29); PostgreSQL 17 and the rest
@@ -95,7 +95,7 @@ v1.2.0.
 ### Security
 
 - **Credentials untracked from git.** The tracked `.env` carried a
-  generated-looking database password — rotate it if reused.
+  generated-looking database password: rotate it if reused.
 
 ### Added
 

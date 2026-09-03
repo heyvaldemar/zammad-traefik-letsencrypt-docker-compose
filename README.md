@@ -1,9 +1,9 @@
-# Zammad + Traefik + Let's Encrypt — Docker Compose
+# Zammad + Traefik + Let's Encrypt on Docker Compose
 
 [![Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml/badge.svg?branch=main)](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository deploys **Zammad** — an open-source helpdesk and ticketing system — behind **Traefik** with automatic **Let's Encrypt TLS**: nginx, rails server, scheduler, and websocket services from the official image, backed by **PostgreSQL 17**, **Elasticsearch**, **Redis**, and **memcached**, with a daily **backup** service (database + storage).
+This repository deploys **Zammad** (an open-source helpdesk and ticketing system) behind **Traefik** with automatic **Let's Encrypt TLS**: nginx, rails server, scheduler, and websocket services from the official image, backed by **PostgreSQL 17**, **Elasticsearch**, **Redis**, and **memcached**, with a daily **backup** service (database + storage).
 
 ## Getting started
 
@@ -28,7 +28,7 @@ $EDITOR .env
 docker compose -f zammad-traefik-letsencrypt-docker-compose.yml -p zammad up -d
 ```
 
-First start takes several minutes: the `init` service migrates and seeds the database. Then `https://${ZAMMAD_HOSTNAME}` serves the setup wizard — create the admin account right away.
+First start takes several minutes: the `init` service migrates and seeds the database. Then `https://${ZAMMAD_HOSTNAME}` serves the setup wizard: create the admin account right away.
 
 ### What success looks like
 
@@ -39,24 +39,24 @@ curl -fsk "https://${ZAMMAD_HOSTNAME}/api/v1/getting_started"   # {"setup_done":
 
 ### Common first-deploy issues
 
-- **502/404 in the first minutes.** Normal — init is still seeding the database. Watch `docker logs zammad-init-1`.
+- **502/404 in the first minutes.** Normal: init is still seeding the database. Watch `docker logs zammad-init-1`.
 - **Cert issuance fails.** DNS hasn't propagated for one of the two hostnames, or port 80 isn't reachable.
 - **Search doesn't find tickets.** Elasticsearch needs a minute to build its index after setup; check `docker logs zammad-elasticsearch-1`.
 - **Networks not found.** Step 2 was skipped.
 
 ## Supply chain trust
 
-Six images — [`traefik`](https://hub.docker.com/_/traefik), [`ghcr.io/zammad/zammad`](https://github.com/zammad/zammad), [`postgres`](https://hub.docker.com/_/postgres), [`elasticsearch`](https://hub.docker.com/_/elasticsearch), [`redis`](https://hub.docker.com/_/redis), [`memcached`](https://hub.docker.com/_/memcached) — pinned to `tag@sha256:<digest>` as interpolation defaults in the compose `x-images` block. `git pull` alone delivers the tested combination; an `*_IMAGE_TAG` variable in `.env` overrides deliberately.
+Six images ([`traefik`](https://hub.docker.com/_/traefik), [`ghcr.io/zammad/zammad`](https://github.com/zammad/zammad), [`postgres`](https://hub.docker.com/_/postgres), [`elasticsearch`](https://hub.docker.com/_/elasticsearch), [`redis`](https://hub.docker.com/_/redis), [`memcached`](https://hub.docker.com/_/memcached)) pinned to `tag@sha256:<digest>` as interpolation defaults in the compose `x-images` block. `git pull` alone delivers the tested combination; an `*_IMAGE_TAG` variable in `.env` overrides deliberately.
 
 The daily `check-pin-freshness` CI job re-resolves each pin against its registry and compares the pinned Zammad and Traefik versions against the latest upstream releases. GitHub Actions are pinned by commit SHA; Dependabot keeps those fresh.
 
 ## Production checklist
 
-- [ ] **Complete the setup wizard immediately after deploy** — it creates the admin account.
+- [ ] **Complete the setup wizard immediately after deploy**: it creates the admin account.
 - [ ] **Strong database password**; regenerate the Traefik dashboard hash.
-- [ ] **Size the host for Elasticsearch** — 4 GB+ RAM for the stack; the ES heap is capped at 512 MB by default, raise `ES_JAVA_OPTS` for real ticket volume.
-- [ ] **Host-mount the backup volume** (`zammad-backup`) for disaster recovery — and verify backups actually appear after the first `BACKUP_TIME`.
-- [ ] **Back up before upgrades** — Zammad migrates its schema on version jumps.
+- [ ] **Size the host for Elasticsearch**: 4 GB+ RAM for the stack; the ES heap is capped at 512 MB by default, raise `ES_JAVA_OPTS` for real ticket volume.
+- [ ] **Host-mount the backup volume** (`zammad-backup`) for disaster recovery, and verify backups actually appear after the first `BACKUP_TIME`.
+- [ ] **Back up before upgrades**: Zammad migrates its schema on version jumps.
 
 ## Backups
 
@@ -80,13 +80,13 @@ Put it on a timer for hands-off minor/patch updates:
 17 5 * * *  /opt/zammad-traefik-letsencrypt-docker-compose/update.sh >> /var/log/zammad-update.log 2>&1
 ```
 
-The script refuses to cross a MAJOR template version on its own — majors are breaking by definition and their release notes exist to be read. After reading them, `./update.sh --allow-major` performs the jump. It also refuses to touch a checkout with local modifications: your customization belongs in `.env`, which updates never overwrite.
+The script refuses to cross a MAJOR template version on its own. Majors are breaking by definition and their release notes exist to be read. After reading them, `./update.sh --allow-major` performs the jump. It also refuses to touch a checkout with local modifications: your customization belongs in `.env`, which updates never overwrite.
 
 This is deliberately a host-side script and not a container in the stack: an in-stack updater needs the Docker socket (root on the host) and turns "someone pushed to a repo" into "someone deployed to your machine" with no operator in the loop. A cron job under your own user updates only to tagged, CI-verified states and leaves the trust boundary where it was.
 
 ## Resource limits
 
-Every service carries memory and CPU limits plus reservations as compose-level defaults — the same values CI boots the stack under. Override any of them in `.env` (the knobs and their defaults are listed in `.env.example`, e.g. `TRAEFIK_MEMORY_LIMIT=512m`) and the override survives every `git pull`. If a service is OOM-killed under real load, `docker inspect <container> --format '{{.State.OOMKilled}}'` says so; raise its `_MEMORY_LIMIT` and recreate.
+Every service carries memory and CPU limits plus reservations as compose-level defaults, the same values CI boots the stack under. Override any of them in `.env` (the knobs and their defaults are listed in `.env.example`, e.g. `TRAEFIK_MEMORY_LIMIT=512m`) and the override survives every `git pull`. If a service is OOM-killed under real load, `docker inspect <container> --format '{{.State.OOMKilled}}'` says so; raise its `_MEMORY_LIMIT` and recreate.
 
 ## Container hardening
 
@@ -108,7 +108,7 @@ The [Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-lets
 
 <div align="center">
 
-**Maintained by [Vladimir Mikhalev](https://github.com/heyvaldemar)** — Docker Captain · IBM Champion · AWS Community Builder
+**Maintained by [Vladimir Mikhalev](https://github.com/heyvaldemar)** · Docker Captain · IBM Champion · AWS Community Builder
 
 [YouTube](https://www.youtube.com/channel/UCf85kQ0u1sYTTTyKVpxrlyQ?sub_confirmation=1) · [Blog](https://heyvaldemar.com) · [LinkedIn](https://www.linkedin.com/in/heyvaldemar/)
 
