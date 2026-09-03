@@ -103,7 +103,7 @@ v1.2.0.
 
 - **Zammad 6.5 → 7.1.3** (a major upgrade: Zammad migrates its schema on
   first start; back up first and expect a longer initial boot),
-  **Elasticsearch 8.17 → 8.19**, **Traefik 3.2 → 3.7** (3.2's Docker
+  **Elasticsearch 8.17 → 8.19, Traefik 3.2 → 3.7** (3.2's Docker
   client cannot talk to Docker Engine 29); PostgreSQL 17 and the rest
   digest-pinned. All pins in the compose `x-images` block.
 - Elasticsearch got a healthcheck and an explicit 512 MB heap.

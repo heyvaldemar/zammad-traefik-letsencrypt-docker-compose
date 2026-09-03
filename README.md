@@ -3,7 +3,7 @@
 [![Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml/badge.svg?branch=main)](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-This repository deploys **Zammad** (an open-source helpdesk and ticketing system) behind **Traefik** with automatic **Let's Encrypt TLS**: nginx, rails server, scheduler, and websocket services from the official image, backed by **PostgreSQL 17**, **Elasticsearch**, **Redis**, and **memcached**, with a daily **backup** service (database + storage).
+This repository deploys Zammad (an open-source helpdesk and ticketing system) behind Traefik with automatic Let's Encrypt TLS: nginx, rails server, scheduler, and websocket services from the official image, backed by PostgreSQL 17, Elasticsearch, Redis, and memcached, with a daily backup service (database + storage).
 
 ## Getting started
 
@@ -98,7 +98,7 @@ Every service runs with `security_opt: no-new-privileges:true`, so a process can
 
 The [Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml?query=branch%3Amain) workflow runs on every push, pull request, and every day at 06:00 UTC: shellcheck + actionlint, Trivy scans of all six pinned images, the weekly freshness check, and a deploy-and-test job that boots the full stack with ephemeral credentials, waits out database seeding, and requires the Zammad API to answer through Traefik.
 
-## Security Notes
+## Security notes
 
 - Credentials are read from `.env` at deploy time; `.env` is gitignored and compose fails fast on missing required variables.
 - **Pre-rotation advisory.** Releases before v1.0.0 (2026-09-01) shipped a tracked `.env` with a generated-looking database password (it also appeared as a fallback inside the backup script). Rotate it if your deployment reused it.
