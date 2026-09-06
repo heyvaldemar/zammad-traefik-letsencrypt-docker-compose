@@ -32,28 +32,35 @@ function zammad_backup {
 
   # delete old backups
   if [ -d "${BACKUP_DIR}" ] && [ -n "$(ls "${BACKUP_DIR}")" ]; then
-    find "${BACKUP_DIR}"/*_zammad_*.gz -type f -mtime +"${HOLD_DAYS}" -delete
+    find "${BACKUP_DIR}" -maxdepth 1 -type f -name '*_zammad_*.gz*' -mtime +"${HOLD_DAYS}" -delete
   fi
 
   if [ "${NO_FILE_BACKUP}" != "yes" ]; then
     # tar files; GNU tar exits 1 when a live file changed mid-read, which is
     # still a complete archive - only exit 2 is a real failure
     DATA_FILE="${BACKUP_DIR}/${TIMESTAMP}_zammad_files.tar.gz"
-    tar -czf "${DATA_FILE}" "${ZAMMAD_DIR}" && RC=0 || RC=$?
+    # Written under a .partial name and renamed only once the write succeeded,
+    # so the real name never exists unless the file behind it is whole. The
+    # .failed rename below only runs if the shell lives to reach it; a
+    # container stopped mid-archive does not, and would otherwise leave a
+    # truncated file under the name a restore would pick.
+    tar -czf "${DATA_FILE}.partial" "${ZAMMAD_DIR}" && RC=0 || RC=$?
     if [ "$RC" -eq 0 ] || [ "$RC" -eq 1 ]; then
+      mv "${DATA_FILE}.partial" "${DATA_FILE}"
       echo "[$(date -Iseconds)] Data backup OK: ${DATA_FILE} ($(stat -c %s "${DATA_FILE}") bytes)"
     else
       echo "[$(date -Iseconds)] Data backup FAILED - partial file kept as ${DATA_FILE}.failed for diagnosis" >&2
-      mv "${DATA_FILE}" "${DATA_FILE}.failed" 2>/dev/null || true
+      mv "${DATA_FILE}.partial" "${DATA_FILE}.failed" 2>/dev/null || true
     fi
   fi
   #db backup
   DB_FILE="${BACKUP_DIR}/${TIMESTAMP}_zammad_db.psql.gz"
-  if pg_dump --dbname=postgresql://"${POSTGRESQL_USER}:${POSTGRESQL_PASS}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DB}" | gzip > "${DB_FILE}"; then
+  if pg_dump --dbname=postgresql://"${POSTGRESQL_USER}:${POSTGRESQL_PASS}@${POSTGRESQL_HOST}:${POSTGRESQL_PORT}/${POSTGRESQL_DB}" | gzip > "${DB_FILE}.partial"; then
+    mv "${DB_FILE}.partial" "${DB_FILE}"
     echo "[$(date -Iseconds)] Database backup OK: ${DB_FILE} ($(stat -c %s "${DB_FILE}") bytes)"
   else
     echo "[$(date -Iseconds)] Database backup FAILED - partial file kept as ${DB_FILE}.failed for diagnosis" >&2
-    mv "${DB_FILE}" "${DB_FILE}.failed" 2>/dev/null || true
+    mv "${DB_FILE}.partial" "${DB_FILE}.failed" 2>/dev/null || true
   fi
   echo "backup finished :)"
 }

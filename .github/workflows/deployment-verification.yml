@@ -263,6 +263,16 @@ jobs:
           docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" exec -T backup sh -c "tar -tzf '$data' > /dev/null" && echo "Data backup valid: $data"
           docker compose -f "$DOCKER_COMPOSE_FILE" -p "$COMPOSE_PROJECT_NAME" logs backup 2>/dev/null | grep -i "backup FAILED" && { echo "::error::the backup log reports a failure"; exit 1; } || true
 
+      - name: Run the backup and restore end-to-end tests
+        # Nine assertions against the live stack, driven through the backup
+        # script's own one-shot entrypoints rather than its daily schedule.
+        # The one that matters is the failure case: a dump pointed at an
+        # unreachable database must be reported AND must leave no file under
+        # the name a restore would pick.
+        run: |
+          chmod +x tests/e2e-backup-restore.sh
+          ./tests/e2e-backup-restore.sh
+
       - name: Wait for the Traefik dashboard to be ready
         run: |
           # shellcheck disable=SC2016

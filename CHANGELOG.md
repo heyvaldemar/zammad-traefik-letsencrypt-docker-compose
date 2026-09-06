@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _(no unreleased changes yet)_
 
+## [1.7.0] - 2026-09-05
+
+### Fixed
+
+- **A backup interrupted halfway no longer looks like a finished one.** The
+  backup script writes the dump and the file archive under a `.partial` name
+  and renames each only once its write has succeeded. It already renamed a
+  failed file to `.failed`, but that branch only runs if the shell lives long
+  enough to reach it — a container stopped mid-dump does not, and left a
+  truncated file under exactly the name a restore would pick. The rest of the
+  fleet was fixed for this on 4 September; this repository was missed, because
+  its loop lives in `scripts/backup.sh` rather than in the compose file.
+- **Pruning now removes `.partial` and `.failed` files too**, and no longer
+  depends on a glob expanding.
+
+### Added
+
+- **Backup and restore tested end to end**, nine assertions against the live
+  stack, driven through the script's own one-shot entrypoints rather than its
+  daily schedule. The dump is a complete gzip containing real SQL, the file
+  archive lists, no `.partial` survives a completed cycle, and the dump
+  restores into a throwaway database built from the same image as the live one
+  with zero SQL errors and a real schema.
+- **The failure case is exercised, not assumed.** A dump pointed at an
+  unreachable database must be reported as failed, must leave nothing under a
+  name a restore would choose, and must keep the partial file as `.failed` for
+  diagnosis.
+
 ## [1.6.0] - 2026-09-04
 
 ### Added
@@ -134,7 +162,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.6.0...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.0...HEAD
+[1.7.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.4.0...v1.5.0
 [1.4.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.3.0...v1.4.0
