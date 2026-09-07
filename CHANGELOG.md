@@ -9,15 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _(no unreleased changes yet)_
 
-## [1.7.0] - 2026-09-05
+## [1.7.1] - 2026-09-07
 
-### Fixed
+### Changed
 
-- **A backup interrupted halfway no longer looks like a finished one.** The
-  backup script writes the dump and the file archive under a `.partial` name
-  and renames each only once its write has succeeded. It already renamed a
-  failed file to `.failed`, but that branch only runs if the shell lives long
-  enough to reach it — a container stopped mid-dump does not, and left a
+- **`update.sh` names any new required variable before it moves.** An update can add a required variable; `docker compose up` used to stop on it after the checkout, with the tree already on the new tag. The script now lists the variables that appeared in `.env.example` since your version and refuses, before anything has moved, when a required one is not in your `.env`. Names only, never values.
+
+ a
   truncated file under exactly the name a restore would pick. The rest of the
   fleet was fixed for this on 4 September; this repository was missed, because
   its loop lives in `scripts/backup.sh` rather than in the compose file.
@@ -162,7 +160,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.0...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.1...HEAD
+[1.7.1]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.5.0...v1.6.0
 [1.5.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.4.0...v1.5.0
