@@ -158,10 +158,24 @@ else
   else
     fail "$errors SQL errors while restoring"
   fi
-  if [ "${tables:-0}" -gt 10 ]; then
-    pass "and produced a schema ($tables tables)"
+  # THE LIVE DATABASE IS THE REFERENCE, NOT A NUMBER PICKED HERE. "More than
+  # ten tables" passes for a dump that restored a fifth of the schema, and
+  # keeps passing when the application grows. Asking the running stack what it
+  # has means the comparison stays true as the schema changes — and when it
+  # stops being true, this fails instead of going on blessing whatever the
+  # dump happened to contain.
+  live_tables="$(docker exec "$DB_CONTAINER" psql -tAq -U "$DB_USER" -d "$DB_NAME" \
+      -c "select count(*) from information_schema.tables where table_schema not in ('pg_catalog','information_schema');" 2>/dev/null | tr -d '[:space:]')"
+  if [ -z "$live_tables" ] || [ "$live_tables" -eq 0 ] 2>/dev/null; then
+    fail "could not read the live schema to compare against — this check cannot pass by failing to look"
+  elif [ "${tables:-0}" -eq "$live_tables" ]; then
+    pass "and produced the same schema the live database has ($tables tables)"
   else
-    fail "restored only ${tables:-0} tables — the dump loaded and made almost nothing"
+    missing="$(docker exec "$DB_CONTAINER" psql -tAq -U "$DB_USER" -d "$DB_NAME" \
+        -c "select table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') order by 1;" 2>/dev/null \
+      | grep -Fxv -f <(docker exec "$TMP" psql -tAq -U "$DB_USER" -d "$DB_NAME" \
+        -c "select table_name from information_schema.tables where table_schema not in ('pg_catalog','information_schema') order by 1;" 2>/dev/null) 2>/dev/null | head -8 | tr '\n' ' ')"
+    fail "restored ${tables:-0} tables where the live database has $live_tables${missing:+ — missing: $missing}"
   fi
 fi
 docker rm -f "$TMP" >/dev/null 2>&1

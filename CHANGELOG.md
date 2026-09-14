@@ -9,6 +9,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 _(no unreleased changes yet)_
 
+## [1.7.2] - 2026-09-14
+
+### Fixed
+
+- **The restore test measured the restored schema against a number written
+  here, not against the database it came from.** "More than ten tables" passes
+  for a dump that restored a fifth of the schema, and keeps passing as the
+  application grows. It now asks the running stack how many tables it has and
+  requires the restored copy to match, naming the missing ones when it does
+  not — so a partial restore fails instead of being blessed by a threshold
+  nobody revisits.
+- A live schema it cannot read is a failure rather than a pass: this check
+  cannot succeed by failing to look.
+
 ## [1.7.1] - 2026-09-07
 
 ### Changed
@@ -160,7 +174,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.1...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.2...HEAD
+[1.7.2]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.1...v1.7.2
 [1.7.1]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.0...v1.7.1
 [1.7.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.6.0...v1.7.0
 [1.6.0]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.5.0...v1.6.0
