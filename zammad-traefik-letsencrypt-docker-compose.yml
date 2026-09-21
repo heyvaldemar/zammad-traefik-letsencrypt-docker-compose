@@ -6,8 +6,8 @@
 # CI (Trivy scans, check-pin-freshness, the ephemeral test .env) reads
 # the pins from these lines — this block is the single source of truth.
 x-images:
-  traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:${TRAEFIK_IMAGE_VERSION:-3.7@sha256:1c32e7c368204fd72812152ebdd2ac0425993df6fd982317deb02e48f2d5423c}}
-  postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:${ZAMMAD_POSTGRES_IMAGE_VERSION:-17-alpine@sha256:f02121de6f74d30d8a94cd1d9584125e2178d7e6c377d8130112d4e52d867995}}
+  traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:${TRAEFIK_IMAGE_VERSION:-3.7@sha256:24841fe2de7304c149343d877d2923b4c8800a38ba015dea9174c23b20e344a0}}
+  postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:${ZAMMAD_POSTGRES_IMAGE_VERSION:-17-alpine@sha256:b0f9560a2de083e2cc7382e75f808c7381a32852a7ec49117deedb300e552b24}}
   elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:${ZAMMAD_ELASTICSEARCH_IMAGE_VERSION:-8.19.20@sha256:7c6a3d514563848873ae3e0e2e36502382842ebae38134a59e91214e8fcdabf3}}
   memcached: &memcached-image ${ZAMMAD_MEMCACHE_IMAGE_TAG:-memcached:${ZAMMAD_MEMCACHE_IMAGE_VERSION:-1.6-alpine@sha256:9e4de012dc607573052061c0bcb38abc775e1dd59b24e7ac38d1892842094aaf}}
   redis: &redis-image ${ZAMMAD_REDIS_IMAGE_TAG:-redis:${ZAMMAD_REDIS_IMAGE_VERSION:-7.4@sha256:c6eabf748fc7a61dbb5a705c78bcf3d6377b1127a97d0ce965c11c44ba46896f}}
