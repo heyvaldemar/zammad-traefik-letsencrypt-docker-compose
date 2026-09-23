@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_(no unreleased changes yet)_
+
+## [1.7.6] - 2026-09-23
+
 ### Changed
 
 - **The freshness check has its own workflow, Pin Freshness.** It ran inside Deployment Verification, whose badge is the one at the top of this README. Across the fleet, nine red runs in ten were a pin one version behind - which the fleet's triage moves within the day - and a reader cannot tell that from a stack that does not boot. The badge now says whether the stack boots. The job itself is unchanged.
@@ -199,7 +203,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.5...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.6...HEAD
+[1.7.6]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.5...v1.7.6
 [1.7.5]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.4...v1.7.5
 [1.7.4]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.3...v1.7.4
 [1.7.3]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.7.2...v1.7.3
