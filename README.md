@@ -1,6 +1,7 @@
 # Zammad + Traefik + Let's Encrypt on Docker Compose
 
 [![Deployment Verification](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml/badge.svg?branch=main)](https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/actions/workflows/deployment-verification.yml)
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/14842/badge)](https://www.bestpractices.dev/projects/14842)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 This repository deploys Zammad (an open-source helpdesk and ticketing system) behind Traefik with automatic Let's Encrypt TLS: nginx, rails server, scheduler, and websocket services from the official image, backed by PostgreSQL 17, Elasticsearch, Redis, and memcached, with a daily backup service (database + storage).
