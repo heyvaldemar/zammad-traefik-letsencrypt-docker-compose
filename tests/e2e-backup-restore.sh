@@ -132,6 +132,28 @@ else
 fi
 
 # --------------------------------------------------------- restore roundtrip
+echo "=== test_prune_removes_old ==="
+# backup.sh deletes *_zammad_*.gz* older than HOLD_DAYS on every cycle. A
+# file dated 2020 placed beside the real ones has to be gone after the next
+# cycle, and the real ones have to stay: a prune that is only intended
+# fills the disk, a prune that takes everything is a backup that is not
+# there on the day. Neither was tested here until 2026-09-25.
+fake="$BACKUP_DIR_IN_CONTAINER/20200101-000000_zammad_db.psql.gz"
+in_backup "echo fake > '$fake' && touch -t 202001010000 '$fake'"
+kept_before="$(in_backup "find '$BACKUP_DIR_IN_CONTAINER' -maxdepth 1 -name '*_zammad_*.gz' -mtime -1 | grep -c ." )"
+run_cycle zammad-backup-once >/dev/null 2>&1 || true
+if in_backup "test -f '$fake'"; then
+  fail "a file dated 2020 survived a backup cycle: HOLD_DAYS is not pruning"
+else
+  pass "a file dated 2020 was pruned on the next cycle"
+fi
+kept_after="$(in_backup "find '$BACKUP_DIR_IN_CONTAINER' -maxdepth 1 -name '*_zammad_*.gz' -mtime -1 | grep -c ." )"
+if [ "${kept_after:-0}" -ge "${kept_before:-1}" ] && [ "${kept_after:-0}" -gt 0 ]; then
+  pass "and the recent backups stayed ($kept_after of them)"
+else
+  fail "the prune took recent backups with it ($kept_before before, ${kept_after:-0} after)"
+fi
+
 echo "=== test_restore_roundtrip ==="
 # Into a throwaway database of the SAME image, never the live one. A dump only
 # loads into a server at least as new as the client that wrote it, so matching
