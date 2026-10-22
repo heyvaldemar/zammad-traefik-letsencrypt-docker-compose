@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_(no unreleased changes yet)_
+
+## [1.8.6] - 2026-10-22
+
 ### Security
 
 - **`postgres:17-alpine` was rebuilt upstream**; the pin moved from `sha256:b0f9560a2de0…` to `sha256:1bcc18d81671…`. Same version, same tag, a rebuilt base image — the usual shape of a security fix in a base layer.
@@ -267,7 +271,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.5...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.6...HEAD
+[1.8.6]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.5...v1.8.6
 [1.8.5]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.4...v1.8.5
 [1.8.4]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.3...v1.8.4
 [1.8.3]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.2...v1.8.3
