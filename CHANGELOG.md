@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_(no unreleased changes yet)_
+### Security
+
+- **`memcached:1.6-alpine` was rebuilt upstream**; the pin moved from `sha256:6d687bc26426…` to `sha256:6a089e37cbb8…`. Same version, same tag, a rebuilt base image — the usual shape of a security fix in a base layer.
 
 ## [1.8.7] - 2026-10-23
 
