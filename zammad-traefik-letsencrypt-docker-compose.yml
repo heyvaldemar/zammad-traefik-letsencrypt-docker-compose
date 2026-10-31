@@ -6,7 +6,7 @@
 # CI (Trivy scans, check-pin-freshness, the ephemeral test .env) reads
 # the pins from these lines — this block is the single source of truth.
 x-images:
-  traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:${TRAEFIK_IMAGE_VERSION:-3.7@sha256:1336e85aaed293bd63d005086e0dd013b04078b26aaeb1c18b26a2f928af7e65}}
+  traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:${TRAEFIK_IMAGE_VERSION:-3.7@sha256:e9338a01a43389362bdef90afd4ff4a30dd6c0a2e1b0ce00c5e0f52659aa2d9c}}
   postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:${ZAMMAD_POSTGRES_IMAGE_VERSION:-17-alpine@sha256:266d3c257594e195b309ae9d1805e54c788f1d7b375f56bf6c367aac6c917e7b}}
   elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:${ZAMMAD_ELASTICSEARCH_IMAGE_VERSION:-8.19.20@sha256:7c6a3d514563848873ae3e0e2e36502382842ebae38134a59e91214e8fcdabf3}}
   memcached: &memcached-image ${ZAMMAD_MEMCACHE_IMAGE_TAG:-memcached:${ZAMMAD_MEMCACHE_IMAGE_VERSION:-1.6-alpine@sha256:6a089e37cbb8acd75c80c6c0667fe57ec54db68782fb1b3afb1d0eb265e50070}}
