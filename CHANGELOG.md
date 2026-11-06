@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_(no unreleased changes yet)_
+### Security
+
+- **`postgres:17-alpine` was rebuilt upstream**; the pin moved from `sha256:266d3c257594…` to `sha256:5d9ee39acd13…`. Same version, same tag, a rebuilt base image — the usual shape of a security fix in a base layer.
+- **`memcached:1.6-alpine` was rebuilt upstream**; the pin moved from `sha256:6a089e37cbb8…` to `sha256:bfc2ee42c4ed…`. Same version, same tag, a rebuilt base image — the usual shape of a security fix in a base layer.
+- **`traefik:3.7` was rebuilt upstream**; the pin moved from `sha256:68ae5fe5b64c…` to `sha256:92627e6a99f7…`. Same version, same tag, a rebuilt base image — the usual shape of a security fix in a base layer.
 
 ## [1.8.14] - 2026-11-06
 
