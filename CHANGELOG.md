@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_(no unreleased changes yet)_
+
+## [1.8.17] - 2026-11-08
+
 ### Changed
 
 - **`elasticsearch:8.19.20` moved to `elasticsearch:8.19.23`.** The freshness check reported the lag; the deploy job booted the stack on the new image before this landed.
@@ -338,7 +342,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.16...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.17...HEAD
+[1.8.17]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.16...v1.8.17
 [1.8.16]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.15...v1.8.16
 [1.8.15]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.14...v1.8.15
 [1.8.14]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.13...v1.8.14
