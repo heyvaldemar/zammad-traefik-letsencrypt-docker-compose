@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_(no unreleased changes yet)_
+### Changed
+
+- **`elasticsearch:8.19.20` moved to `elasticsearch:8.19.23`.** The freshness check reported the lag; the deploy job booted the stack on the new image before this landed.
 
 ## [1.8.16] - 2026-11-06
 
