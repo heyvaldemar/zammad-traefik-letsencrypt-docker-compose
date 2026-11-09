@@ -7,7 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-_(no unreleased changes yet)_
+### Changed
+
+- **The backup-restore test's scratch PostgreSQL gets its database and user by name.** Neither is a secret, but fleet conformance now flags any value expanded into `-e NAME=`. Test only.
 
 ## [1.8.17] - 2026-11-08
 

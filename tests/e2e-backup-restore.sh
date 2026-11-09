@@ -161,7 +161,7 @@ echo "=== test_restore_roundtrip ==="
 IMAGE="$(docker inspect "$DB_CONTAINER" --format '{{.Config.Image}}')"
 TMP="zammad-e2e-restore-$$"
 docker rm -f "$TMP" >/dev/null 2>&1
-docker run -d --name "$TMP" -e POSTGRES_DB="$DB_NAME" -e POSTGRES_USER="$DB_USER" \
+POSTGRES_DB="$DB_NAME" POSTGRES_USER="$DB_USER" docker run -d --name "$TMP" -e POSTGRES_DB -e POSTGRES_USER \
   -e POSTGRES_PASSWORD=e2erestorepassword "$IMAGE" >/dev/null 2>&1
 ready=false
 for _ in $(seq 1 60); do
