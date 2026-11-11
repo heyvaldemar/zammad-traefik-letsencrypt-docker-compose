@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- **`elasticsearch:8.19.23` moved to `elasticsearch:8.19.25`.** The freshness check reported the lag; the deploy job booted the stack on the new image before this landed.
 - **The backup-restore test's scratch PostgreSQL gets its database and user by name.** Neither is a secret, but fleet conformance now flags any value expanded into `-e NAME=`. Test only.
 
 ## [1.8.17] - 2026-11-08
