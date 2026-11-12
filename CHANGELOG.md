@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+_(no unreleased changes yet)_
+
+## [1.8.19] - 2026-11-12
+
 ### Changed
 
 - **`ghcr.io/zammad/zammad:7.2.2` moved to `ghcr.io/zammad/zammad:7.2.3`.** The freshness check reported the lag; the deploy job booted the stack on the new image before this landed.
@@ -359,7 +363,8 @@ v1.2.0.
   deploy-and-test job that boots the full stack (init seeds the
   database) and requires the Zammad API to answer through Traefik.
 
-[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.18...HEAD
+[Unreleased]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.19...HEAD
+[1.8.19]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.18...v1.8.19
 [1.8.18]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.17...v1.8.18
 [1.8.17]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.16...v1.8.17
 [1.8.16]: https://github.com/heyvaldemar/zammad-traefik-letsencrypt-docker-compose/compare/v1.8.15...v1.8.16
