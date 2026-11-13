@@ -7,8 +7,8 @@
 # the pins from these lines — this block is the single source of truth.
 x-images:
   traefik: &traefik-image ${TRAEFIK_IMAGE_TAG:-traefik:${TRAEFIK_IMAGE_VERSION:-3.7@sha256:c1ea95f3b3eab04ba8868d201b8494e12284e424f7cec2127e3194bca1c6641c}}
-  postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:${ZAMMAD_POSTGRES_IMAGE_VERSION:-17-alpine@sha256:3540c0362c809df084ffac0ae69fe794515f9de92692f02178bcdce0ef0302ac}}
-  elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:${ZAMMAD_ELASTICSEARCH_IMAGE_VERSION:-8.19.25@sha256:d77dfeb18e120145d0d686f9143d55021fe224e679eb695de91e7486c5b3da56}}
+  postgres: &postgres-image ${ZAMMAD_POSTGRES_IMAGE_TAG:-postgres:${ZAMMAD_POSTGRES_IMAGE_VERSION:-17-alpine@sha256:d3244e8ce3f165ee3c93d9c4a4b1d0fe48b3a89e2287b717fdcbbde92d405065}}
+  elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:${ZAMMAD_ELASTICSEARCH_IMAGE_VERSION:-8.19.25@sha256:ef44866274bd7cb2c644f4f6657ce0832819f662adb66b2769d0ba5dabad77d6}}
   memcached: &memcached-image ${ZAMMAD_MEMCACHE_IMAGE_TAG:-memcached:${ZAMMAD_MEMCACHE_IMAGE_VERSION:-1.6-alpine@sha256:bfc2ee42c4edb65f436dafc6a61cbc6938c30118e11ddea2f968e1a2c90bb12a}}
   redis: &redis-image ${ZAMMAD_REDIS_IMAGE_TAG:-redis:${ZAMMAD_REDIS_IMAGE_VERSION:-7.4@sha256:2e3eb11462c4e3759e6972678dd051d150ff54b1e60714b3c33b701260172a90}}
   zammad: &zammad-image ${ZAMMAD_IMAGE_TAG:-ghcr.io/zammad/zammad:${ZAMMAD_IMAGE_VERSION:-7.2.3@sha256:487ea743107a4c4af6717c1c149bb5dfc4f5308d2aff5dac2bf68fa0d379a034}}
