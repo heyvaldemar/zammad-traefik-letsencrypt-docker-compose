@@ -11,7 +11,7 @@ x-images:
   elasticsearch: &elasticsearch-image ${ZAMMAD_ELASTICSEARCH_IMAGE_TAG:-elasticsearch:${ZAMMAD_ELASTICSEARCH_IMAGE_VERSION:-8.19.26@sha256:9507398e316f867a21c2c5e0dcb825075067510125e733b4c7b690683325a29f}}
   memcached: &memcached-image ${ZAMMAD_MEMCACHE_IMAGE_TAG:-memcached:${ZAMMAD_MEMCACHE_IMAGE_VERSION:-1.6-alpine@sha256:bfc2ee42c4edb65f436dafc6a61cbc6938c30118e11ddea2f968e1a2c90bb12a}}
   redis: &redis-image ${ZAMMAD_REDIS_IMAGE_TAG:-redis:${ZAMMAD_REDIS_IMAGE_VERSION:-7.4@sha256:6b645a37f49b0546582468706b32e71a8b7fbb5ba4583d0f9e27a8004716b738}}
-  zammad: &zammad-image ${ZAMMAD_IMAGE_TAG:-ghcr.io/zammad/zammad:${ZAMMAD_IMAGE_VERSION:-7.2.3@sha256:487ea743107a4c4af6717c1c149bb5dfc4f5308d2aff5dac2bf68fa0d379a034}}
+  zammad: &zammad-image ${ZAMMAD_IMAGE_TAG:-ghcr.io/zammad/zammad:${ZAMMAD_IMAGE_VERSION:-7.3.0@sha256:faee8f91bcfb96afa32e4a9a25ac71e34cf1b8fc1725af584f47de26af64e9c3}}
 
 networks:
   zammad-network:
